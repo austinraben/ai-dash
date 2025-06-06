@@ -7,13 +7,19 @@ const Game = ({ selectedPrompt, correctAnswers }) => {
     const [results, setResults] = useState([]);
 
     useEffect(() => {
-        if (selectedPrompt && timeLeft > 0) {
+        setTimeLeft(30);
+        setAnswers([]);
+        setResults([]);
+    }, [selectedPrompt])
+
+    useEffect(() => {
+        if (timeLeft > 0) {
             const timer = setInterval(() => {
                 setTimeLeft((prev) => prev - 1);
             }, 1000);
             return () => clearInterval(timer);
         }
-    }, [selectedPrompt, timeLeft]);
+    }, [timeLeft]);
 
     const handleInputChange = (e) => {
         setInput(e.target.value);
@@ -21,34 +27,37 @@ const Game = ({ selectedPrompt, correctAnswers }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (input.trim()) {
-            const isCorrect = correctAnswers.map(a => a.toLowerCase()).includes(input.trim().toLowerCase());            setResults([...results, { answers: input.trim(), isCorrect }])
-            setResults([...results, { answer: input.trim(), isCorrect }]);
-            setAnswers([...answers, input.trim()]);
+        if (input.trim() && timeLeft > 0) {
+            const trimmedInput = input.trim().toLowerCase();
+            const isCorrect = correctAnswers
+            .map(a => a.toLowerCase())
+            .includes(trimmedInput);  
+            if (!answers.map(a => a.toLowerCase()).includes(trimmedInput)) {
+                setResults([...results, { answer: input.trim(), isCorrect }]);
+                setAnswers([...answers, input.trim()]);
+            }      
             setInput('');
         }
-    }
-
-    if (!selectedPrompt) {
-        return <div>Select a prompt to start the game!</div>;
     }
 
 return (
     <div>
         <h2>{selectedPrompt.text}</h2>
-        <p>Time left: {timeLeft} seconds</p>
+        {timeLeft > 0 ? <p>Time left: {timeLeft} seconds</p> : <p>Time's up!</p>}
         <form onSubmit={handleSubmit}>
             <input
-            type="text"
-            value={input}
-            onChange={handleInputChange}
-            placeholder="Type your answer"
+                type="text"
+                value={input}
+                onChange={handleInputChange}
+                placeholder="Type your answer"
             />
-            <button type="submit">Submit</button>
+            <button type="submit" disabled={timeLeft === 0}>
+                Submit
+            </button>
         </form>
         <ul>
             {results.map((result, index) => (
-                <li key={index} style={{ color: result.isCorrect ? 'green' : 'red' }}>
+                <li key={index} className={result.isCorrect ? 'correct' : 'incorrect'}>
                     {result.answer} {result.isCorrect ? '✓' : '✗'}
                 </li>
             ))}

@@ -1,4 +1,51 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #e0e0e0;
+}
+
 .App {
   text-align: center;
   padding: 20px;
+}
+
+h1,
+h2 {
+  color: #333;
+}
+
+select,
+input,
+button {
+  padding: 10px;
+  margin: 10px;
+  font-size: 16px;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  margin: 5px 0;
+}
+
+.correct {
+  color: green;
+}
+
+.incorrect {
+  color: red;
 }
