@@ -77,9 +77,9 @@ def generate_prompt_task(category):
             ],
             "NCAAB": [
                 "teams that won championships in the 2000s",
-                "players who were named Final Four MVP since 2010",
-                "teams that produced a #1 NBA draft pick in the 2010s",
-                "teams that reached the Final Four 3+ times since 2000",
+                "teams with multiple players selected in the NBA draft",
+                "teams that produced a #1 NBA draft pick in the 2000s",
+                "teams that have won the NCAA championship since 2010",
                 "players who won the Wooden Award in the 2010s"
             ]
         }
