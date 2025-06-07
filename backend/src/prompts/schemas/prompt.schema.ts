@@ -1,13 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+export type PromptDocument = Prompt & Document;
+
 @Schema()
-export class Prompt extends Document {
+export class Prompt {
   @Prop({ required: true })
   text: string;
-
-  @Prop({ required: true })
-  category: string;
 
   @Prop({ default: false })
   isAIGenerated: boolean;

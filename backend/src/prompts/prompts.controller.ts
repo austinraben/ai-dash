@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { PromptsService } from './prompts.service';
-import { Prompt } from './prompt.schema';
+import { Prompt } from './schemas/prompt.schema';
 
 @Controller('prompts')
 export class PromptsController {
