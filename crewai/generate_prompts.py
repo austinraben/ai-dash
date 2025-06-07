@@ -21,46 +21,34 @@ prompt_generator = Agent(
 
 def generate_prompt_task(category):
     options = {
-        "Geography": ["countries that are", "US states that are", "cities that are"],
+        "Geography": ["geographical places that start with", "geographical places that are"],
         "Food": ["foods that are"],
         "Basketball": ["players who have", "teams that have"],
         "American Football": ["players who have", "teams that have"],
         "Weird Facts": ["weird things that"]
     }
+    adjectives = ["popular", "spicy", "cold", "historic", "unique"]
+    football_accomplishments = ["Super Bowl wins", "Pro Bowl selections", "statistical milestones", "hall of fame inductions"]
 
     if category == "Geography":
-        specific_places = random.choice(options[category])
-        constraints = [
-            "in the Southern Hemisphere",
-            "known for their beaches",
-            "landlocked in Europe",
-            "part of the Pacific Islands",
-            "with a population under 1 million"
-        ]
-        constraint = random.choice(constraints)
+        adjective = random.choice(adjectives)
+        prompt_type = random.choice(options[category])
         return Task(
             description=f"""
                 Generate a basic prompt for a naming game based on the category '{category}'.
-                The prompt should start with 'Name' and have clear, non-debatable answers, with a manageable number of possible answers (5-10).
-                Use the format: 'Name {specific_places} {constraint}' or a unique variation.
+                The prompt should start with 'Name' and have clear, non-debatable, and many possible answers.
+                Use the format: 'Name {prompt_type} {adjective}' or a unique variation (e.g., geographical places like countries, cities, or US states).
             """,
             agent=prompt_generator,
             expected_output="A single prompt string starting with 'Name'."
         )
     elif category == "Food":
-        constraints = [
-            "traditional Italian desserts",
-            "spicy Mexican dishes",
-            "Japanese sushi ingredients",
-            "vegan breakfast options",
-            "French cheeses"
-        ]
-        constraint = random.choice(constraints)
+        adjective = random.choice(adjectives)
         return Task(
             description=f"""
                 Generate a basic prompt for a naming game based on the category '{category}'.
-                The prompt should start with 'Name' and have clear, non-debatable answers, with a manageable number of possible answers (5-10).
-                Use the format: 'Name {constraint}' or a unique variation.
+                The prompt should start with 'Name' and have clear, non-debatable, and many possible answers.
+                Use the format: 'Name foods that are {adjective}' or a unique variation.
             """,
             agent=prompt_generator,
             expected_output="A single prompt string starting with 'Name'."
@@ -77,9 +65,9 @@ def generate_prompt_task(category):
             ],
             "NCAAB": [
                 "teams that won championships in the 2000s",
-                "teams with multiple players selected in the NBA draft",
-                "teams that produced a #1 NBA draft pick in the 2000s",
-                "teams that have won the NCAA championship since 2010",
+                "players who were named Final Four MVP since 2010",
+                "teams that produced a #1 NBA draft pick in the 2010s",
+                "teams that reached the Final Four 3+ times since 2000",
                 "players who won the Wooden Award in the 2010s"
             ]
         }
@@ -117,7 +105,7 @@ def generate_prompt_task(category):
         return Task(
             description=f"""
                 Generate a basic prompt for a naming game based on the category '{category}' at the {level} level.
-                The prompt should start with 'Name' and have clear, non-debatable answers, with a manageable number of possible answers (5-10).
+                The prompt should start with 'Name' and have clear, non-debatable, and many possible answers.
                 Use the format: 'Name {prompt_type} {accomplishment}' or a unique variation.
             """,
             agent=prompt_generator,
@@ -135,7 +123,7 @@ def generate_prompt_task(category):
         return Task(
             description=f"""
                 Generate a basic prompt for a naming game based on the category '{category}'.
-                The prompt should start with 'Name' and have clear, non-debatable answers, with a manageable number of possible answers (5-10).
+                The prompt should start with 'Name' and have clear, non-debatable, and many possible answers.
                 Use the format: 'Name {constraint}' or a unique variation (e.g., 'funny' is synonymous with 'weird').
             """,
             agent=prompt_generator,
@@ -143,7 +131,7 @@ def generate_prompt_task(category):
         )
 
 if __name__ == "__main__":
-    test_category = categories[2]  # Basketball
+    test_category = categories[2]  # "Basketball"
     task = generate_prompt_task(test_category)
     crew = Crew(
         agents=[prompt_generator],
@@ -151,4 +139,4 @@ if __name__ == "__main__":
         verbose=True
     )
     result = crew.kickoff()
-    print(f"Generated Prompt: {result}")
+    print(f"PROMPT: {result}")
