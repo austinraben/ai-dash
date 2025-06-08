@@ -16,6 +16,7 @@ const PromptSelector = () => {
   const [aiPrompt, setAiPrompt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [selectedType, setSelectedType] = useState('predefined');
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -64,7 +65,8 @@ const PromptSelector = () => {
 
   useEffect(() => {
     const fetchLatestAiPrompt = async () => {
-      if (selectedType === 'ai-previous' && !selectedPrompt) {
+      if (selectedType === 'ai-previous') {
+        setLoadingPrevious(true);
         try {
           const response = await fetch('http://localhost:3000/crewai/latest-prompt');
           const data = await response.json();
@@ -76,11 +78,13 @@ const PromptSelector = () => {
         } catch (error) {
           alert('Failed to fetch previous AI prompt');
           console.error('Latest AI prompt fetch error:', error);
+        } finally {
+          setLoadingPrevious(false);
         }
       }
     };
     fetchLatestAiPrompt();
-  }, [selectedType, selectedPrompt]);
+  }, [selectedType]);
 
   const handleSelectType = (e) => {
     const type = e.target.value;
@@ -146,10 +150,18 @@ const PromptSelector = () => {
                 {loadingAI && <div>Loading AI prompt...</div>}
               </>
             )}
-            {selectedType === 'ai-previous' && selectedPrompt && (
-              <select onChange={handleSelectPrompt} value={selectedPrompt._id || ''}>
-                <option value={selectedPrompt._id}>{selectedPrompt.text}</option>
-              </select>
+            {selectedType === 'ai-previous' && (
+              <>
+                {loadingPrevious ? (
+                  <div>Loading previous AI prompt...</div>
+                ) : selectedPrompt ? (
+                  <select onChange={handleSelectPrompt} value={selectedPrompt._id || ''}>
+                    <option value={selectedPrompt._id}>{selectedPrompt.text}</option>
+                  </select>
+                ) : (
+                  <div>No previous AI prompt available</div>
+                )}
+              </>
             )}
           </div>
           {selectedPrompt && !gameStarted && (
