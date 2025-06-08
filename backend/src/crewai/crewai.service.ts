@@ -15,7 +15,7 @@ async runPythonScript(category?: string): Promise<string> {
   const crewaiDir = process.env.CREWAI_DIR;
   const pythonPath = `${crewaiDir}/venv/bin/python`;
   const scriptPath = process.env.CREWAI_SCRIPT_PATH;
-  const args = category ? [`--category`, category] : [];
+  const args = category ? [`--category`, decodeURIComponent(category)] : [];
   const command = [pythonPath, scriptPath, ...args].join(' ');
 
   console.log(`Executing: ${command}`);

@@ -114,53 +114,59 @@ const PromptSelector = () => {
 
   return (
     <div>
-      <h2>Select a Prompt Type</h2>
-      <select onChange={handleSelectType} value={selectedType}>
-        <option value="predefined">Predefined Prompt</option>
-        <option value="ai-generate">Generate AI Prompt</option>
-        <option value="ai-previous">Previous AI Prompt</option>
-      </select>
-      {selectedType === 'predefined' && (
-        <select onChange={handleSelectPrompt} value={selectedPrompt?._id || ''}>
-          <option value="">Choose a prompt...</option>
-          {prompts.map((prompt) => (
-            <option key={prompt._id} value={prompt._id}>
-              {prompt.text}
-            </option>
-          ))}
-        </select>
-      )}
-      {selectedType === 'ai-generate' && (
+      {!gameStarted ? (
         <>
-          <select onChange={(e) => setSelectedCategory(e.target.value)} value={selectedCategory}>
-            <option value="">Choose a category...</option>
-            <option value="Geography">Geography</option>
-            <option value="Food">Food</option>
-            <option value="Basketball">Basketball</option>
-            <option value="American Football">American Football</option>
-            <option value="Weird Facts">Weird Facts</option>
+          <h2>Select a Prompt Type</h2>
+          <select onChange={handleSelectType} value={selectedType}>
+            <option value="predefined">Predefined Prompt</option>
+            <option value="ai-generate">Generate AI Prompt</option>
+            <option value="ai-previous">Previous AI Prompt</option>
           </select>
-          {loadingAI ? (
-            <div>Loading AI prompt...</div>
-          ) : aiPrompt ? (
-            <select onChange={handleSelectPrompt} value={selectedPrompt?._id || ''}>
-              <option value={aiPrompt._id}>{aiPrompt.text}</option>
-            </select>
-          ) : null}
+          <div>
+            {selectedType === 'predefined' && (
+              <select onChange={handleSelectPrompt} value={selectedPrompt?._id || ''}>
+                <option value="">Choose a prompt...</option>
+                {prompts.map((prompt) => (
+                  <option key={prompt._id} value={prompt._id}>
+                    {prompt.text}
+                  </option>
+                ))}
+              </select>
+            )}
+            {selectedType === 'ai-generate' && (
+              <>
+                <select onChange={(e) => setSelectedCategory(e.target.value)} value={selectedCategory}>
+                  <option value="">Choose a category...</option>
+                  <option value="Geography">Geography</option>
+                  <option value="Food">Food</option>
+                  <option value="Basketball">Basketball</option>
+                  <option value="American Football">American Football</option>
+                  <option value="Weird Facts">Weird Facts</option>
+                </select>
+                {loadingAI && <div>Loading AI prompt...</div>}
+              </>
+            )}
+            {selectedType === 'ai-previous' && selectedPrompt && (
+              <select onChange={handleSelectPrompt} value={selectedPrompt._id || ''}>
+                <option value={selectedPrompt._id}>{selectedPrompt.text}</option>
+              </select>
+            )}
+          </div>
+          {selectedPrompt && !gameStarted && (
+            <button onClick={handleStartGame}>Start Game</button>
+          )}
         </>
-      )}
-      {selectedType === 'ai-previous' && selectedPrompt && (
-        <select onChange={handleSelectPrompt} value={selectedPrompt._id || ''}>
-          <option value={selectedPrompt._id}>{selectedPrompt.text}</option>
-        </select>
-      )}
-      {selectedPrompt && !gameStarted && (
-        <button onClick={handleStartGame}>Start Game</button>
-      )}
-      {gameStarted && (
+      ) : (
         <Game
           selectedPrompt={selectedPrompt}
           correctAnswers={sampleAnswers[selectedPrompt?.text] || []}
+          resetGame={() => {
+            setGameStarted(false);
+            setSelectedPrompt(null);
+            setSelectedType('predefined');
+            setSelectedCategory('');
+            setAiPrompt(null);
+          }}
         />
       )}
     </div>

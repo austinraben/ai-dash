@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 
-const Game = ({ selectedPrompt, correctAnswers }) => {
+const Game = ({ selectedPrompt, correctAnswers, resetGame }) => {
     const [timeLeft, setTimeLeft] = useState(30);
     const [answers, setAnswers] = useState([]);
     const [input, setInput] = useState('');
     const [results, setResults] = useState([]);
+    const [showResetButton, setShowResetButton] = useState(false);
 
     useEffect(() => {
         setTimeLeft(30);
@@ -44,17 +45,24 @@ return (
     <div>
         <h2>{selectedPrompt.text}</h2>
         {timeLeft > 0 ? <p>Time left: {timeLeft} seconds</p> : <p>Time's up!</p>}
+        {timeLeft > 0 ? (
         <form onSubmit={handleSubmit}>
             <input
                 type="text"
                 value={input}
                 onChange={handleInputChange}
                 placeholder="Type your answer"
+                disabled={timeLeft === 0}
             />
             <button type="submit" disabled={timeLeft === 0}>
                 Submit
             </button>
         </form>
+        ) : (
+         <button onClick={resetGame} style={{ marginTop: '20px' }}>
+          Reset Game
+         </button>
+        )}
         <ul>
             {results.map((result, index) => (
                 <li key={index} className={result.isCorrect ? 'correct' : 'incorrect'}>
@@ -62,6 +70,11 @@ return (
                 </li>
             ))}
       </ul>
+      {showResetButton && (
+        <button onClick={resetGame} style={{ marginTop: '20px' }}>
+          Reset Game
+        </button>
+      )}
     </div>
   );
 };
