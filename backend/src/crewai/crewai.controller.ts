@@ -1,4 +1,4 @@
-import { Controller, Get, Delete } from '@nestjs/common';
+import { Controller, Delete, Get, Query } from '@nestjs/common';
 import { CrewAIService } from './crewai.service';
 
 @Controller('crewai')
@@ -6,9 +6,9 @@ export class CrewAIController {
   constructor(private readonly crewAIService: CrewAIService) {}
 
   @Get('generate-prompt')
-  async generatePrompt(): Promise<{ prompt: string; error?: string; isNew?: boolean }> {
+  async generatePrompt(@Query('category') category?: string): Promise<{ prompt: string; error?: string; isNew?: boolean }> {
     try {
-      const prompt = await this.crewAIService.runPythonScript();
+      const prompt = await this.crewAIService.runPythonScript(category);
       return { prompt, isNew: true };
     } catch (error) {
       return { prompt: '', error: error.message, isNew: false };

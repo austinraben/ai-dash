@@ -1,8 +1,9 @@
 import os
 import json
 import random
-from dotenv import load_dotenv
+import sys
 from crewai import Agent, Task, Crew
+from dotenv import load_dotenv
 
 load_dotenv()
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
@@ -131,8 +132,11 @@ def generate_prompt_task(category):
         )
 
 if __name__ == "__main__":
-    test_category = categories[2]  # "Basketball"
-    task = generate_prompt_task(test_category)
+    category = sys.argv[2] if len(sys.argv) > 2 and sys.argv[1] == '--category' and sys.argv[2] in categories else None
+    if not category:
+        print("ERROR: No valid category provided")
+        sys.exit(1)
+    task = generate_prompt_task(category)
     crew = Crew(
         agents=[prompt_generator],
         tasks=[task],

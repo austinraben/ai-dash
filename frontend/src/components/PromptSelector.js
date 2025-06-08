@@ -13,9 +13,13 @@ const sampleAnswers = {
 
 const PromptSelector = () => {
   const [prompts, setPrompts] = useState([]);
+  const [aiPrompt, setAiPrompt] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingAI, setLoadingAI] = useState(false);
+  const [selectedType, setSelectedType] = useState('predefined');
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [gameStarted, setGameStarted] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   useEffect(() => {
     const fetchPrompts = async () => {
@@ -25,23 +29,84 @@ const PromptSelector = () => {
         setPrompts(data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching prompts:', error);
+        console.error('Error fetching predefined prompts:', error);
         setLoading(false);
       }
     };
     fetchPrompts();
   }, []);
 
+  useEffect(() => {
+    const fetchAiPrompt = async () => {
+      if (selectedType === 'ai-generate' && selectedCategory && !aiPrompt) {
+        setLoadingAI(true);
+        try {
+          const response = await fetch(`http://localhost:3000/crewai/generate-prompt?category=${encodeURIComponent(selectedCategory)}`);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const data = await response.json();
+          if (data.prompt && !data.error) {
+            const newAiPrompt = { _id: Date.now().toString(), text: data.prompt };
+            setAiPrompt(newAiPrompt);
+            setSelectedPrompt(newAiPrompt);
+          } else {
+            alert(`Error generating AI prompt: ${data.error || 'Unknown error'}`);
+          }
+        } catch (error) {
+          alert(`Failed to generate AI prompt: ${error.message}`);
+          console.error('AI prompt fetch error:', error);
+        } finally {
+          setLoadingAI(false);
+        }
+      }
+    };
+    fetchAiPrompt();
+  }, [selectedType, selectedCategory, aiPrompt]);
+
+  useEffect(() => {
+    const fetchLatestAiPrompt = async () => {
+      if (selectedType === 'ai-previous' && !selectedPrompt) {
+        try {
+          const response = await fetch('http://localhost:3000/crewai/latest-prompt');
+          const data = await response.json();
+          if (data.prompt && !data.error) {
+            setSelectedPrompt({ _id: Date.now().toString(), text: data.prompt });
+          } else {
+            alert(`Error fetching previous AI prompt: ${data.error || 'No prompts available'}`);
+          }
+        } catch (error) {
+          alert('Failed to fetch previous AI prompt');
+          console.error('Latest AI prompt fetch error:', error);
+        }
+      }
+    };
+    fetchLatestAiPrompt();
+  }, [selectedType, selectedPrompt]);
+
+  const handleSelectType = (e) => {
+    const type = e.target.value;
+    setSelectedType(type);
+    setSelectedPrompt(null);
+    setGameStarted(false);
+    if (type === 'predefined') setAiPrompt(null);
+    if (type !== 'ai-generate') setSelectedCategory('');
+  };
+
   const handleSelectPrompt = (e) => {
     const promptId = e.target.value;
-    const prompt = prompts.find((p) => p._id === promptId);
+    const prompt = selectedType === 'predefined'
+      ? prompts.find((p) => p._id === promptId)
+      : selectedType === 'ai-generate'
+      ? aiPrompt
+      : selectedType === 'ai-previous'
+      ? selectedPrompt
+      : null;
     setSelectedPrompt(prompt);
     setGameStarted(false);
   };
 
   const handleStartGame = () => {
     setGameStarted(true);
-  }
+  };
 
   if (loading) {
     return <div>Loading prompts...</div>;
@@ -49,26 +114,57 @@ const PromptSelector = () => {
 
   return (
     <div>
-        <h2>Select a Prompt</h2>
-            <select onChange={handleSelectPrompt}>
-                <option value="">Choose a prompt...</option>
-                    {prompts.map((prompt) => (
-                    <option key={prompt._id} value={prompt._id}>
-                        {prompt.text}
-                    </option>
-                    ))}
+      <h2>Select a Prompt Type</h2>
+      <select onChange={handleSelectType} value={selectedType}>
+        <option value="predefined">Predefined Prompt</option>
+        <option value="ai-generate">Generate AI Prompt</option>
+        <option value="ai-previous">Previous AI Prompt</option>
+      </select>
+      {selectedType === 'predefined' && (
+        <select onChange={handleSelectPrompt} value={selectedPrompt?._id || ''}>
+          <option value="">Choose a prompt...</option>
+          {prompts.map((prompt) => (
+            <option key={prompt._id} value={prompt._id}>
+              {prompt.text}
+            </option>
+          ))}
+        </select>
+      )}
+      {selectedType === 'ai-generate' && (
+        <>
+          <select onChange={(e) => setSelectedCategory(e.target.value)} value={selectedCategory}>
+            <option value="">Choose a category...</option>
+            <option value="Geography">Geography</option>
+            <option value="Food">Food</option>
+            <option value="Basketball">Basketball</option>
+            <option value="American Football">American Football</option>
+            <option value="Weird Facts">Weird Facts</option>
+          </select>
+          {loadingAI ? (
+            <div>Loading AI prompt...</div>
+          ) : aiPrompt ? (
+            <select onChange={handleSelectPrompt} value={selectedPrompt?._id || ''}>
+              <option value={aiPrompt._id}>{aiPrompt.text}</option>
             </select>
-            {selectedPrompt && !gameStarted && (
-                <button onClick={handleStartGame}>Start Game</button>
-            )}
-            {gameStarted && (
-                <Game 
-                    selectedPrompt={selectedPrompt} 
-                    correctAnswers={sampleAnswers[selectedPrompt?.text] || []}                
-                />
-            )}
-        </div>
-    );
+          ) : null}
+        </>
+      )}
+      {selectedType === 'ai-previous' && selectedPrompt && (
+        <select onChange={handleSelectPrompt} value={selectedPrompt._id || ''}>
+          <option value={selectedPrompt._id}>{selectedPrompt.text}</option>
+        </select>
+      )}
+      {selectedPrompt && !gameStarted && (
+        <button onClick={handleStartGame}>Start Game</button>
+      )}
+      {gameStarted && (
+        <Game
+          selectedPrompt={selectedPrompt}
+          correctAnswers={sampleAnswers[selectedPrompt?.text] || []}
+        />
+      )}
+    </div>
+  );
 };
 
 export default PromptSelector;
