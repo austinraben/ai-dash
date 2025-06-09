@@ -10,6 +10,9 @@ export class Prompt {
 
   @Prop({ default: false })
   isAIGenerated: boolean;
+
+  @Prop({ type: [String], default: [] })
+  answers: string[]; 
 }
 
 export const PromptSchema = SchemaFactory.createForClass(Prompt);

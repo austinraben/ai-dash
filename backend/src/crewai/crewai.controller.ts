@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Delete } from '@nestjs/common'; // Added Delete import
 import { CrewAIService } from './crewai.service';
 
 @Controller('crewai')
@@ -6,27 +6,17 @@ export class CrewAIController {
   constructor(private readonly crewAIService: CrewAIService) {}
 
   @Get('generate-prompt')
-  async generatePrompt(@Query('category') category?: string): Promise<{ prompt: string; error?: string; isNew?: boolean }> {
+  async generatePrompt(@Query('category') category?: string): Promise<{ prompt: string; answers: string[]; error?: string; isNew?: boolean }> {
     try {
-      const prompt = await this.crewAIService.runPythonScript(category);
-      return { prompt, isNew: true };
+      const { prompt, answers } = await this.crewAIService.runPythonScript(category);
+      return { prompt, answers, isNew: true };
     } catch (error) {
-      return { prompt: '', error: error.message, isNew: false };
-    }
-  }
-
-  @Get('latest-prompt')
-  async getLatestPrompt(): Promise<{ prompt: string; error?: string }> {
-    try {
-      const latestPrompt = await this.crewAIService.getLatestPrompt();
-      return { prompt: latestPrompt || 'No prompts available' };
-    } catch (error) {
-      return { prompt: '', error: error.message };
+      return { prompt: '', answers: [], error: error.message, isNew: false };
     }
   }
 
   @Get('all-prompts')
-  async getAllPrompts(): Promise<{ prompts: { _id: string; text: string }[] }> {
+  async getAllPrompts(): Promise<{ prompts: { _id: string; text: string; answers: string[] }[] }> {
     try {
       const prompts = await this.crewAIService.getAllAIPrompts();
       return { prompts };
@@ -36,7 +26,7 @@ export class CrewAIController {
     }
   }
 
-  @Delete('clear-prompts')
+  @Delete('clear-prompts') // Added this route
   async clearPrompts(): Promise<{ message: string; error?: string }> {
     try {
       await this.crewAIService.clearPrompts();

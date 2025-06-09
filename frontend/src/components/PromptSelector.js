@@ -57,11 +57,10 @@ const PromptSelector = () => {
           const response = await fetch(`http://localhost:3000/crewai/generate-prompt?category=${encodeURIComponent(selectedCategory)}`);
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const data = await response.json();
-          if (data.prompt && !data.error) {
-            const newAiPrompt = { _id: Date.now().toString(), text: data.prompt };
+          if (data.prompt && data.answers && !data.error) {
+            const newAiPrompt = { _id: Date.now().toString(), text: data.prompt, answers: data.answers };
             setAiPrompt(newAiPrompt);
             setSelectedPrompt(newAiPrompt);
-            // Refresh all AI prompts after generating a new one
             const allPrompts = await fetchAllAIPrompts();
             setAllAIPrompts(allPrompts);
           } else {
@@ -95,11 +94,15 @@ const PromptSelector = () => {
 
   const handleSelectPrompt = (e) => {
     const promptId = e.target.value;
-    const prompt = selectedType === 'predefined'
-      ? prompts.find((p) => p._id === promptId)
-      : selectedType === 'ai-generate'
-      ? aiPrompt
-      : allAIPrompts.find((p) => p._id === promptId);
+    let prompt;
+    if (selectedType === 'predefined') {
+      prompt = prompts.find((p) => p._id === promptId);
+      prompt.answers = sampleAnswers[prompt.text] || [];
+    } else if (selectedType === 'ai-generate') {
+      prompt = aiPrompt;
+    } else {
+      prompt = allAIPrompts.find((p) => p._id === promptId);
+    }
     setSelectedPrompt(prompt);
     setGameStarted(false);
   };
@@ -164,7 +167,7 @@ const PromptSelector = () => {
       ) : (
         <Game
           selectedPrompt={selectedPrompt}
-          correctAnswers={sampleAnswers[selectedPrompt?.text] || []}
+          correctAnswers={selectedPrompt.answers || sampleAnswers[selectedPrompt.text] || []}
           resetGame={() => {
             setGameStarted(false);
             setSelectedPrompt(null);

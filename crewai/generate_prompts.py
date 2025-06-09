@@ -1,6 +1,5 @@
 import os
 import json
-import random
 import sys
 from crewai import Agent, Task, Crew
 from dotenv import load_dotenv
@@ -15,7 +14,15 @@ categories = categories_data["categories"]
 prompt_generator = Agent(
     role="Prompt Generator",
     goal="Generate unique, short, and valid prompts for a naming game based on given categories",
-    backstory="You’re a creative expert at crafting concise, fun prompts for games, ensuring variety and feasibility based on category data, avoiding repetition or impossible scenarios.",
+    backstory="You’re a creative expert at crafting concise, fun prompts for games, ensuring variety and feasibility based on category data.",
+    verbose=True,
+    allow_delegation=False
+)
+
+answer_generator = Agent(
+    role="Answer Bank Generator",
+    goal="Generate a large predefined answer bank for a given prompt",
+    backstory="You’re an expert at creating extensive, diverse lists of valid answers for prompts, ensuring no duplicates and broad coverage.",
     verbose=True,
     allow_delegation=False
 )
@@ -38,6 +45,14 @@ def generate_prompt_task(category):
         expected_output="A single prompt string starting with 'Name'."
     )
 
+def generate_answer_bank_task(prompt):
+    description = f"For the prompt '{prompt}', generate a large predefined answer bank (at least 20 answers) of valid responses. Ensure no duplicates, cover a wide range of possibilities, and output the list as a JSON array."
+    return Task(
+        description=description,
+        agent=answer_generator,
+        expected_output="A JSON array of strings, each a valid answer to the prompt."
+    )
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     category_idx = args.index('--category') if '--category' in args else -1
@@ -45,11 +60,30 @@ if __name__ == "__main__":
     if not category or category not in categories:
         print("ERROR: No valid category provided")
         sys.exit(1)
-    task = generate_prompt_task(category)
-    crew = Crew(
-        agents=[prompt_generator],
-        tasks=[task],
-        verbose=True
-    )
-    result = crew.kickoff()
-    print(f"PROMPT: {result}")
+
+    prompt_task = generate_prompt_task(category)
+    crew = Crew(agents=[prompt_generator], tasks=[prompt_task], verbose=True)
+    prompt_result = crew.kickoff()
+    prompt_text = prompt_result.raw if hasattr(prompt_result, 'raw') else str(prompt_result.tasks_output[0]) if hasattr(prompt_result, 'tasks_output') else str(prompt_result)
+
+    answer_task = generate_answer_bank_task(prompt_text)
+    crew = Crew(agents=[answer_generator], tasks=[answer_task], verbose=True)
+    answer_result = crew.kickoff()
+    answer_text = answer_result.raw if hasattr(answer_result, 'raw') else str(answer_result.tasks_output[0]) if hasattr(answer_result, 'tasks_output') else str(answer_result)
+
+    try:
+        answers = json.loads(answer_text)
+        if not isinstance(answers, list):
+            raise ValueError("Answer bank must be a JSON array")
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"ERROR: Invalid answer bank format - {str(e)}")
+        sys.exit(1)
+
+    if not isinstance(prompt_text, str):
+        prompt_text = str(prompt_text)
+
+    output = {
+        "prompt": prompt_text,
+        "answers": answers
+    }
+    print(json.dumps(output))
