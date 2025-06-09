@@ -25,6 +25,17 @@ export class CrewAIController {
     }
   }
 
+  @Get('all-prompts')
+  async getAllPrompts(): Promise<{ prompts: { _id: string; text: string }[] }> {
+    try {
+      const prompts = await this.crewAIService.getAllAIPrompts();
+      return { prompts };
+    } catch (error) {
+      console.error('Error fetching all prompts:', error);
+      return { prompts: [] };
+    }
+  }
+
   @Delete('clear-prompts')
   async clearPrompts(): Promise<{ message: string; error?: string }> {
     try {

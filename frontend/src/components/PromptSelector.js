@@ -14,13 +14,25 @@ const sampleAnswers = {
 const PromptSelector = () => {
   const [prompts, setPrompts] = useState([]);
   const [aiPrompt, setAiPrompt] = useState(null);
+  const [allAIPrompts, setAllAIPrompts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingAI, setLoadingAI] = useState(false);
-  const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [selectedType, setSelectedType] = useState('predefined');
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
+
+  const fetchAllAIPrompts = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/crewai/all-prompts');
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      return data.prompts || [];
+    } catch (error) {
+      console.error('Error fetching all AI prompts:', error);
+      return [];
+    }
+  };
 
   useEffect(() => {
     const fetchPrompts = async () => {
@@ -49,6 +61,9 @@ const PromptSelector = () => {
             const newAiPrompt = { _id: Date.now().toString(), text: data.prompt };
             setAiPrompt(newAiPrompt);
             setSelectedPrompt(newAiPrompt);
+            // Refresh all AI prompts after generating a new one
+            const allPrompts = await fetchAllAIPrompts();
+            setAllAIPrompts(allPrompts);
           } else {
             alert(`Error generating AI prompt: ${data.error || 'Unknown error'}`);
           }
@@ -64,26 +79,9 @@ const PromptSelector = () => {
   }, [selectedType, selectedCategory, aiPrompt]);
 
   useEffect(() => {
-    const fetchLatestAiPrompt = async () => {
-      if (selectedType === 'ai-previous') {
-        setLoadingPrevious(true);
-        try {
-          const response = await fetch('http://localhost:3000/crewai/latest-prompt');
-          const data = await response.json();
-          if (data.prompt && !data.error) {
-            setSelectedPrompt({ _id: Date.now().toString(), text: data.prompt });
-          } else {
-            alert(`Error fetching previous AI prompt: ${data.error || 'No prompts available'}`);
-          }
-        } catch (error) {
-          alert('Failed to fetch previous AI prompt');
-          console.error('Latest AI prompt fetch error:', error);
-        } finally {
-          setLoadingPrevious(false);
-        }
-      }
-    };
-    fetchLatestAiPrompt();
+    if (selectedType === 'ai-previous') {
+      fetchAllAIPrompts().then(setAllAIPrompts);
+    }
   }, [selectedType]);
 
   const handleSelectType = (e) => {
@@ -101,9 +99,7 @@ const PromptSelector = () => {
       ? prompts.find((p) => p._id === promptId)
       : selectedType === 'ai-generate'
       ? aiPrompt
-      : selectedType === 'ai-previous'
-      ? selectedPrompt
-      : null;
+      : allAIPrompts.find((p) => p._id === promptId);
     setSelectedPrompt(prompt);
     setGameStarted(false);
   };
@@ -151,17 +147,14 @@ const PromptSelector = () => {
               </>
             )}
             {selectedType === 'ai-previous' && (
-              <>
-                {loadingPrevious ? (
-                  <div>Loading previous AI prompt...</div>
-                ) : selectedPrompt ? (
-                  <select onChange={handleSelectPrompt} value={selectedPrompt._id || ''}>
-                    <option value={selectedPrompt._id}>{selectedPrompt.text}</option>
-                  </select>
-                ) : (
-                  <div>No previous AI prompt available</div>
-                )}
-              </>
+              <select onChange={handleSelectPrompt} value={selectedPrompt?._id || ''}>
+                <option value="">Choose a previous prompt...</option>
+                {allAIPrompts.map((prompt) => (
+                  <option key={prompt._id} value={prompt._id}>
+                    {prompt.text}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
           {selectedPrompt && !gameStarted && (
